@@ -1,34 +1,34 @@
 #include "nfaparser.h"
 
-namespace Regex::NfaParser
+namespace Regex
 {
-    class NfaParser
+    //improvements to be done
+	// - take raw infixexpression then add concat operator where needed insted of asking user to give it.
+
+    NfaParser::NfaParser(const std::string& infixExpression)
     {
-        NfaParser(const std::string &infixExpression)
-        {
-            std::string postfixExpression = infixToPostfix(infixExpression);
-            _nfa = generateNfa(postfixExpression);
-        }
+        std::string postfixExpression = infixToPostfix(infixExpression);
+        _nfa = generateNfa(postfixExpression);
+    }
 
-        NFA getNfa()
-        {
-            return _nfa;
-        }
+    NfaParser::NFA NfaParser::getNfa()
+    {
+        return _nfa;
+    }
 
-        std::string NfaParser::infixToPostfix(const std::string& infixExpression)
-        {
-            return std::string();
-        }
+    std::string NfaParser::infixToPostfix(const std::string& infixExpression)
+    {
+        return std::string();
+    }
 
-        NFA NfaParser::createNfaObject(const bool& isEnd)
-        {
-            NFA nfaObject { isEnd ,  };
-            return nfaObject;
-        }
+    NfaParser::NFA NfaParser::createNfaObject(const bool& isEnd)
+    {
+        NFA nfaObject{ isEnd , };
+        return nfaObject;
+    }
 
-        NFA NfaParser::generateNfa(const std::string& postfixExpression)
-        {
-            return NFA();
-        }
-    };
+    NfaParser::NFA NfaParser::generateNfa(const std::string& postfixExpression)
+    {
+        return NFA();
+    }
 }

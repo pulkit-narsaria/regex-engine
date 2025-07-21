@@ -2,23 +2,21 @@
 
 #include <iostream>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
-namespace Regex::NfaParser
+namespace Regex
 {
     class NfaParser
     {
     public:
-        NfaParser(const std::string &infixExpression)
-        {
-        }
-
+        NfaParser(const std::string& infixExpression);
+        
         struct NFA
         {
-            bool isEnd,
-            std::vector<NFA> epsilonTransitions,
-            std::unordered_map<NFA,char> symbolTransitions
+            bool isEnd;
+            std::vector<NFA> epsilonTransitions;
+            std::unordered_map<char, NFA> symbolTransitions;
         };
 
         NFA getNfa();
