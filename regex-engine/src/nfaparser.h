@@ -7,38 +7,38 @@
 
 namespace Regex
 {
-    class NfaParser
-    {
-    public:
-        NfaParser(const std::string& infixExpression);
-        
-        struct State
-        {
-            bool isEnd;
-            std::vector<State> epsilonTransitions;
-            std::unordered_map<char, State> symbolTransitions;
-        };
+	class NfaParser
+	{
+	public:
+		NfaParser(const std::string& infixExpression);
 
-        struct NFA
-        {
-            State start;
-            State end;
-        };
+		struct State
+		{
+			bool isEnd;
+			std::vector<State> epsilonTransitions;
+			std::unordered_map<char, State> symbolTransitions;
+		};
 
-        NFA getNfa();
+		struct NFA
+		{
+			State start;
+			State end;
+		};
 
-    private:
-        std::string addConcatenations(const std::string& rawInfixExpression);
-        std::string infixToPostfix(const std::string &infixExpression);
-        State createState(const bool &isEnd);
-        NFA generateNfa(const std::string &postfixExpression);
-        void addEpsilonTransition(State& from, State& to);
+		NFA getNfa();
+
+	private:
+		std::string addConcatenations(const std::string& rawInfixExpression);
+		std::string infixToPostfix(const std::string& infixExpression);
+		State createState(const bool& isEnd);
+		NFA generateNfa(const std::string& postfixExpression);
+		void addEpsilonTransition(State& from, State& to);
 		void addSymbolTransition(State& from, char symbol, State& to);
-        NFA createEpsilonTransition();
-        NFA createSymbolTransition(char symbol);
+		NFA createEpsilonTransition();
+		NFA createSymbolTransition(char symbol);
 		NFA concatStates(NFA& first, NFA& second);
 		NFA unionStates(NFA& first, NFA& second);
 		NFA kleeneStarState(NFA& state);
-        NFA _nfa;
-    };
+		NFA _nfa;
+	};
 }
