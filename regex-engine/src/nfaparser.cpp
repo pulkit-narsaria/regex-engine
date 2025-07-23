@@ -30,7 +30,7 @@ namespace Regex
 	std::string NfaParser::addConcatenations(const std::string& rawInfixExpression)
 	{
 		std::string modifiedExpression;
-		for (int index = 0; index < rawInfixExpression.length(); index++)
+		for (size_t index = 0; index < rawInfixExpression.length(); index++)
 		{
 			auto currentChar = rawInfixExpression[index];
 			modifiedExpression += currentChar;
