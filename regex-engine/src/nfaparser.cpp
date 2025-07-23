@@ -5,12 +5,12 @@ namespace Regex
 {
     NfaParser::NfaParser(const std::string& rawInfixExpression)
     {
-		std::string concatinatedInfixExpression = addConcatinations(rawInfixExpression);
-        std::string postfixExpression = infixToPostfix(concatinatedInfixExpression);
+		std::string concatenatedInfixExpression = addConcatenations(rawInfixExpression);
+        std::string postfixExpression = infixToPostfix(concatenatedInfixExpression);
         _nfa = generateNfa(postfixExpression);
     }
 
-    std::pair<NfaParser::State, NfaParser::State> NfaParser::getNfa()
+    NfaParser::NFA NfaParser::getNfa()
     {
         return _nfa;
     }
@@ -27,7 +27,7 @@ namespace Regex
         return !isOperator(ch) && ch != '(' && ch != ')';
     }
 
-    std::string NfaParser::addConcatinations(const std::string& rawInfixExpression)
+    std::string NfaParser::addConcatenations(const std::string& rawInfixExpression)
     {
         std::string modifiedExpression;
         for (int index = 0; index < rawInfixExpression.length(); index++)
@@ -37,8 +37,8 @@ namespace Regex
             if (index < rawInfixExpression.length() - 1)
             {
                 auto nextChar = rawInfixExpression[index + 1];
-                bool insertConcatination = (currentChar == ')' || currentChar == '*' || isOperand(currentChar)) && (nextChar == '(' || isOperand(nextChar));
-                if (insertConcatination)
+                bool insertConcatenation = (currentChar == ')' || currentChar == '*' || isOperand(currentChar)) && (nextChar == '(' || isOperand(nextChar));
+                if (insertConcatenation)
                 {
                     modifiedExpression += '.';
                 }
@@ -90,8 +90,6 @@ namespace Regex
 					}
 					else
 						break;
-					postfixExpression += operatorStack.top();
-					operatorStack.pop();
 				}
 				operatorStack.push(ch);
             }
@@ -111,19 +109,20 @@ namespace Regex
         return state;
     }
 
-    std::pair<NfaParser::State, NfaParser::State> NfaParser::generateNfa(const std::string& postfixExpression)
+    NfaParser::NFA NfaParser::generateNfa(const std::string& postfixExpression)
     {
         if (postfixExpression.empty())
             return createEpsilonTransition();
 
-		std::stack<std::pair<State,State>> stateStack;
+		std::stack<NFA> stateStack;
 
 		for (char ch : postfixExpression)
 		{
             if (ch == '*')
             {
-				stateStack.push(kleeneStarState(stateStack.top()));
+				auto nfa = stateStack.top();
                 stateStack.pop();
+                stateStack.push(kleeneStarState(nfa));
             }
             else if (ch == '|')
             {
@@ -159,56 +158,56 @@ namespace Regex
 		from.symbolTransitions[symbol] = to;
     }
 
-    std::pair<NfaParser::State, NfaParser::State> NfaParser::createEpsilonTransition()
+    NfaParser::NFA NfaParser::createEpsilonTransition()
     {
         State start = createState(false);
         State end = createState(true);
 		addEpsilonTransition(start, end);
-        return std::make_pair(start, end);
+        return NFA{start,end};
     }
 
-    std::pair<NfaParser::State, NfaParser::State> NfaParser::createSymbolTransition(char symbol)
+    NfaParser::NFA NfaParser::createSymbolTransition(char symbol)
     {
 		State start = createState(false);
 		State end = createState(true);
 		addSymbolTransition(start, symbol, end);
-        return std::make_pair(start,end);
+        return NFA{start,end};
     }
     
-    std::pair<NfaParser::State, NfaParser::State> NfaParser::concatStates(std::pair<State, State>& first, std::pair<State, State>& second)
+    NfaParser::NFA NfaParser::concatStates(NFA& first, NFA& second)
     {
-		addEpsilonTransition(first.second, second.first);
-		first.second.isEnd = false;
+		addEpsilonTransition(first.end, second.start);
+		first.end.isEnd = false;
 
-        return std::make_pair(first.first,second.second);
+        return NFA{ first.start,second.end };
     }
 
-    std::pair<NfaParser::State, NfaParser::State> NfaParser::unionStates(std::pair<State, State>& first, std::pair<State, State>& second)
+    NfaParser::NFA NfaParser::unionStates(NFA& first, NFA& second)
     {
 		auto start = createState(false);
-		addEpsilonTransition(start, first.first);
-		addEpsilonTransition(start, second.first);
+		addEpsilonTransition(start, first.start);
+		addEpsilonTransition(start, second.start);
 
 		auto end = createState(true);
-		addEpsilonTransition(first.second, end);
-		addEpsilonTransition(second.second, end);
-		first.second.isEnd = false;
-		second.second.isEnd = false;
+		addEpsilonTransition(first.end, end);
+		addEpsilonTransition(second.end, end);
+		first.end.isEnd = false;
+		second.end.isEnd = false;
 
-        return std::make_pair(start,end);
+        return NFA{ start,end };
     }
     
-    std::pair<NfaParser::State, NfaParser::State> NfaParser::kleeneStarState(std::pair<State,State>& nfa)
+    NfaParser::NFA NfaParser::kleeneStarState(NFA& nfa)
     {
         auto start = createState(false);
         auto end = createState(true);
 		addEpsilonTransition(start, end);
-		addEpsilonTransition(start, nfa.first);
+		addEpsilonTransition(start, nfa.start);
 
-		addEpsilonTransition(nfa.second, end);
-		addEpsilonTransition(nfa.second, nfa.first);
-		nfa.second.isEnd = false;
+		addEpsilonTransition(nfa.end, end);
+		addEpsilonTransition(nfa.end, nfa.start);
+		nfa.end.isEnd = false;
 
-		return std::make_pair(start, end);
+        return NFA{ start, end };
     }
 }
