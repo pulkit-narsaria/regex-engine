@@ -78,7 +78,7 @@ namespace Regex
 				if (!operatorStack.empty())
 					operatorStack.pop();
 			}
-			if (isOperator(ch))
+			else if (isOperator(ch))
 			{
 				while (!operatorStack.empty() && operatorStack.top() != '(')
 				{
