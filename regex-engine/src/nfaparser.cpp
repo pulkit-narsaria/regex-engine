@@ -7,7 +7,7 @@ namespace Regex
 	{
 		std::string concatenatedInfixExpression = addConcatenations(rawInfixExpression);
 		std::string postfixExpression = infixToPostfix(concatenatedInfixExpression);
-		_nfa = generateNfa(postfixExpression);
+		_nfa = *generateNfa(postfixExpression);
 	}
 
 	NfaParser::NFA NfaParser::getNfa()
@@ -102,112 +102,194 @@ namespace Regex
 		return postfixExpression;
 	}
 
-	NfaParser::State NfaParser::createState(const bool& isEnd)
+	std::shared_ptr<NfaParser::State> NfaParser::createState(const bool& isEnd)
 	{
-		State state;
-		state.isEnd = isEnd;
+		auto state = std::make_shared<State>();
+		state->isEnd = isEnd;
 		return state;
 	}
 
-	NfaParser::NFA NfaParser::generateNfa(const std::string& postfixExpression)
+	std::unique_ptr<NfaParser::NFA> NfaParser::generateNfa(const std::string& postfixExpression)
 	{
 		if (postfixExpression.empty())
 			return createEpsilonTransition();
 
-		std::stack<NFA> stateStack;
+		std::stack<std::unique_ptr<NFA>> stateStack;
 
 		for (char ch : postfixExpression)
 		{
 			if (ch == '*')
 			{
-				auto nfa = stateStack.top();
+				auto nfa = std::move(stateStack.top());
 				stateStack.pop();
-				stateStack.push(kleeneStarState(nfa));
+				stateStack.push(kleeneStarState(std::move(nfa)));
 			}
 			else if (ch == '|')
 			{
-				auto right = stateStack.top();
+				auto right = std::move(stateStack.top());
 				stateStack.pop();
-				auto left = stateStack.top();
+				auto left = std::move(stateStack.top());
 				stateStack.pop();
-				stateStack.push(unionStates(left, right));
+				stateStack.push(unionStates(std::move(left), std::move(right)));
 			}
 			else if (ch == '.')
 			{
-				auto right = stateStack.top();
+				auto right = std::move(stateStack.top());
 				stateStack.pop();
-				auto left = stateStack.top();
+				auto left = std::move(stateStack.top());
 				stateStack.pop();
-				stateStack.push(concatStates(left, right));
+				stateStack.push(concatStates(std::move(left), std::move(right)));
 			}
 			else
 			{
 				stateStack.push(createSymbolTransition(ch));
 			}
 		}
-		return stateStack.top();
+		return std::move(stateStack.top());
 	}
 
-	void NfaParser::addEpsilonTransition(State& from, State& to)
+	void NfaParser::addEpsilonTransition(std::shared_ptr<State> from, std::shared_ptr<State> to)
 	{
-		from.epsilonTransitions.push_back(to);
+		from->epsilonTransitions.push_back(to);
 	}
 
-	void NfaParser::addSymbolTransition(State& from, char symbol, State& to)
+	void NfaParser::addSymbolTransition(std::shared_ptr<State> from, char& symbol, std::shared_ptr<State> to)
 	{
-		from.symbolTransitions[symbol] = to;
+		from->symbolTransitions[symbol] = to;
 	}
 
-	NfaParser::NFA NfaParser::createEpsilonTransition()
+	std::unique_ptr<NfaParser::NFA> NfaParser::createEpsilonTransition()
 	{
-		State start = createState(false);
-		State end = createState(true);
+		std::shared_ptr<State> start = createState(false);
+		std::shared_ptr<State> end = createState(true);
 		addEpsilonTransition(start, end);
-		return NFA{ start,end };
+		return std::make_unique<NFA>(start,end);
 	}
 
-	NfaParser::NFA NfaParser::createSymbolTransition(char symbol)
+	std::unique_ptr<NfaParser::NFA> NfaParser::createSymbolTransition(char symbol)
 	{
-		State start = createState(false);
-		State end = createState(true);
+		std::shared_ptr<State> start = createState(false);
+		std::shared_ptr<State> end = createState(true);
 		addSymbolTransition(start, symbol, end);
-		return NFA{ start,end };
+		return std::make_unique<NFA>(start, end);
 	}
 
-	NfaParser::NFA NfaParser::concatStates(NFA& first, NFA& second)
+	std::unique_ptr<NfaParser::NFA> NfaParser::concatStates(std::unique_ptr<NFA> first, std::unique_ptr<NFA> second)
 	{
-		addEpsilonTransition(first.end, second.start);
-		first.end.isEnd = false;
-
-		return NFA{ first.start,second.end };
+		addEpsilonTransition(first->end, second->start);
+		first->end->isEnd = false;
+		return std::make_unique<NFA>(first->start,second->end);
 	}
 
-	NfaParser::NFA NfaParser::unionStates(NFA& first, NFA& second)
+	std::unique_ptr<NfaParser::NFA> NfaParser::unionStates(std::unique_ptr<NFA> first, std::unique_ptr<NFA> second)
 	{
 		auto start = createState(false);
-		addEpsilonTransition(start, first.start);
-		addEpsilonTransition(start, second.start);
+		addEpsilonTransition(start, first->start);
+		addEpsilonTransition(start, second->start);
 
 		auto end = createState(true);
-		addEpsilonTransition(first.end, end);
-		addEpsilonTransition(second.end, end);
-		first.end.isEnd = false;
-		second.end.isEnd = false;
+		addEpsilonTransition(first->end, end);
+		addEpsilonTransition(second->end, end);
+		first->end->isEnd = false;
+		second->end->isEnd = false;
 
-		return NFA{ start,end };
+		return std::make_unique<NFA>(start, end);
 	}
 
-	NfaParser::NFA NfaParser::kleeneStarState(NFA& nfa)
+	std::unique_ptr<NfaParser::NFA> NfaParser::kleeneStarState(std::unique_ptr<NFA> nfa)
 	{
 		auto start = createState(false);
 		auto end = createState(true);
 		addEpsilonTransition(start, end);
-		addEpsilonTransition(start, nfa.start);
+		addEpsilonTransition(start, nfa->start);
 
-		addEpsilonTransition(nfa.end, end);
-		addEpsilonTransition(nfa.end, nfa.start);
-		nfa.end.isEnd = false;
+		addEpsilonTransition(nfa->end, end);
+		addEpsilonTransition(nfa->end, nfa->start);
+		nfa->end->isEnd = false;
 
-		return NFA{ start, end };
+		return std::make_unique<NFA>(start, end);
+	}
+
+	/*bool NfaParser::recursiveBacktrackingSearch(const std::string& input, const State& currentState, size_t position, std::vector<std::shared_ptr<State>> visited)
+	{
+		if (std::find(visited.begin(), visited.end(), currentState) != visited.end())
+			return false;
+		
+		visited.push_back(currentState);
+		
+		if (position == input.length())
+		{
+			if (currentState.isEnd)
+				return true;
+			for (const auto& nextState : currentState.epsilonTransitions)
+			{
+				if (recursiveBacktrackingSearch(input, nextState, position, visited))
+					return true;
+			}
+		}
+		else
+		{
+			if (currentState.symbolTransitions.find(input[position]) == currentState.symbolTransitions.end())
+			{
+				for (const auto& nextState : currentState.epsilonTransitions)
+				{
+					if (recursiveBacktrackingSearch(input, nextState, position, visited))
+						return true;
+				}
+			}
+			else
+			{
+				std::vector<std::shared_ptr<State>> tempVisited;
+				if (recursiveBacktrackingSearch(input, currentState.symbolTransitions.at(input[position]), position + 1, tempVisited))
+					return true;
+			}
+		}
+		return false;
+	}*/
+
+	bool NfaParser::search(std::unique_ptr<NFA> nfa, std::string& word)
+	{
+		std::vector<std::shared_ptr<State>> currentStates;
+		std::vector<std::shared_ptr<State>> visitedStates;
+		addNextState(nfa->start, currentStates, visitedStates);
+		for (auto ch : word)
+		{
+			std::vector<std::shared_ptr<State>> nextStates;
+			for (auto &state : currentStates)
+			{
+				if (state->symbolTransitions.find(ch) != state->symbolTransitions.end())
+				{
+					auto nextState = state->symbolTransitions.at(ch);
+					std::vector<std::shared_ptr<State>> visitedstates;
+					addNextState(nextState, nextStates, visitedstates);
+				}
+			}
+			currentStates = nextStates;
+		}
+		for (auto state : currentStates)
+		{
+			if (state->isEnd)
+				return true;
+		}
+		return false;
+	}
+
+	void NfaParser::addNextState(std::shared_ptr<State> currentState, std::vector<std::shared_ptr<State>>& nextStates, std::vector<std::shared_ptr<State>>& visitedStates)
+	{
+		if (currentState->epsilonTransitions.size() > 0)
+		{
+			for (auto nextState : currentState->epsilonTransitions)
+			{
+				if (std::find(visitedStates.begin(), visitedStates.end(), nextState) == visitedStates.end())
+				{
+					visitedStates.push_back(nextState);
+					addNextState(nextState, nextStates, visitedStates);
+				}
+			}
+		}
+		else
+		{
+			nextStates.push_back(currentState);
+		}
 	}
 }
