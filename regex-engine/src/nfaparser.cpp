@@ -102,7 +102,7 @@ namespace Regex
 		return postfixExpression;
 	}
 
-	std::shared_ptr<NfaParser::State> NfaParser::createState(const bool& isEnd)
+	std::shared_ptr<NfaParser::State> NfaParser::createState(const bool isEnd)
 	{
 		auto state = std::make_shared<State>();
 		state->isEnd = isEnd;
@@ -148,12 +148,12 @@ namespace Regex
 		return std::move(stateStack.top());
 	}
 
-	void NfaParser::addEpsilonTransition(std::shared_ptr<State> from, std::shared_ptr<State> to)
+	void NfaParser::addEpsilonTransition(const std::shared_ptr<State> from, const std::shared_ptr<State> to)
 	{
 		from->epsilonTransitions.push_back(to);
 	}
 
-	void NfaParser::addSymbolTransition(std::shared_ptr<State> from, char& symbol, std::shared_ptr<State> to)
+	void NfaParser::addSymbolTransition(const std::shared_ptr<State> from,const char symbol,const std::shared_ptr<State> to)
 	{
 		from->symbolTransitions[symbol] = to;
 	}
@@ -166,7 +166,7 @@ namespace Regex
 		return std::make_unique<NFA>(start,end);
 	}
 
-	std::unique_ptr<NfaParser::NFA> NfaParser::createSymbolTransition(char symbol)
+	std::unique_ptr<NfaParser::NFA> NfaParser::createSymbolTransition(const char symbol)
 	{
 		std::shared_ptr<State> start = createState(false);
 		std::shared_ptr<State> end = createState(true);
@@ -174,14 +174,14 @@ namespace Regex
 		return std::make_unique<NFA>(start, end);
 	}
 
-	std::unique_ptr<NfaParser::NFA> NfaParser::concatStates(std::unique_ptr<NFA> first, std::unique_ptr<NFA> second)
+	std::unique_ptr<NfaParser::NFA> NfaParser::concatStates(const std::unique_ptr<NFA> first, const std::unique_ptr<NFA> second)
 	{
 		addEpsilonTransition(first->end, second->start);
 		first->end->isEnd = false;
 		return std::make_unique<NFA>(first->start,second->end);
 	}
 
-	std::unique_ptr<NfaParser::NFA> NfaParser::unionStates(std::unique_ptr<NFA> first, std::unique_ptr<NFA> second)
+	std::unique_ptr<NfaParser::NFA> NfaParser::unionStates(const std::unique_ptr<NFA> first,const std::unique_ptr<NFA> second)
 	{
 		auto start = createState(false);
 		addEpsilonTransition(start, first->start);
@@ -196,7 +196,7 @@ namespace Regex
 		return std::make_unique<NFA>(start, end);
 	}
 
-	std::unique_ptr<NfaParser::NFA> NfaParser::kleeneStarState(std::unique_ptr<NFA> nfa)
+	std::unique_ptr<NfaParser::NFA> NfaParser::kleeneStarState(const std::unique_ptr<NFA> nfa)
 	{
 		auto start = createState(false);
 		auto end = createState(true);
@@ -247,7 +247,7 @@ namespace Regex
 		return false;
 	}*/
 
-	bool NfaParser::search(std::unique_ptr<NFA> nfa, std::string& word)
+	bool NfaParser::search(const std::unique_ptr<NFA> nfa,const std::string& word)
 	{
 		std::vector<std::shared_ptr<State>> currentStates;
 		std::vector<std::shared_ptr<State>> visitedStates;
@@ -260,8 +260,8 @@ namespace Regex
 				if (state->symbolTransitions.find(ch) != state->symbolTransitions.end())
 				{
 					auto nextState = state->symbolTransitions.at(ch);
-					std::vector<std::shared_ptr<State>> visitedstates;
-					addNextState(nextState, nextStates, visitedstates);
+					visitedStates.clear();
+					addNextState(nextState, nextStates, visitedStates);
 				}
 			}
 			currentStates = nextStates;
@@ -274,9 +274,9 @@ namespace Regex
 		return false;
 	}
 
-	void NfaParser::addNextState(std::shared_ptr<State> currentState, std::vector<std::shared_ptr<State>>& nextStates, std::vector<std::shared_ptr<State>>& visitedStates)
+	void NfaParser::addNextState(const std::shared_ptr<State> currentState, std::vector<std::shared_ptr<State>>& nextStates, std::vector<std::shared_ptr<State>>& visitedStates)
 	{
-		if (currentState->epsilonTransitions.size() > 0)
+		if (!currentState->epsilonTransitions.empty())
 		{
 			for (auto nextState : currentState->epsilonTransitions)
 			{
