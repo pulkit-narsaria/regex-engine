@@ -19,12 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\nfaparser.h" />
-    <ClInclude Include="src\regexengine.h" />
+    <ClInclude Include="src\nfagenerator.h" />
+    <ClInclude Include="src\parser.h" />
+    <ClInclude Include="src\regexmatcher.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\nfaparser.cpp" />
-    <ClCompile Include="src\regexengine.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\nfagenerator.cpp" />
+    <ClCompile Include="src\parser.cpp" />
+    <ClCompile Include="src\regexmatcher.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
