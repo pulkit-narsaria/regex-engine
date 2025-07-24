@@ -33,14 +33,16 @@ namespace Regex::Parser
 		{
 			auto currentChar = rawInfixExpression[index];
 			modifiedExpression += currentChar;
+			if (currentChar == '(' || currentChar == '|')
+				continue;
 			if (index < rawInfixExpression.length() - 1)
 			{
 				auto nextChar = rawInfixExpression[index + 1];
-				bool insertConcatenation = (currentChar == ')' || currentChar == '*' || isOperand(currentChar)) && (nextChar == '(' || isOperand(nextChar));
-				if (insertConcatenation)
+				if (isOperator(nextChar) || nextChar == ')')
 				{
-					modifiedExpression += '.';
+					continue;
 				}
+				modifiedExpression += '.';
 			}
 		}
 		return modifiedExpression;
