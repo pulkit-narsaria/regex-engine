@@ -30,8 +30,8 @@ namespace Regex
 	private:
 		std::shared_ptr<State> createState(const bool isEnd);
 		std::unique_ptr<NFA> generateNfa(const std::string& postfixExpression);
-		void addEpsilonTransition(const std::shared_ptr<State> from,const std::shared_ptr<State> to);
-		void addSymbolTransition(const std::shared_ptr<State> from,const char symbol,const std::shared_ptr<State> to);
+		void addEpsilonTransition(const std::shared_ptr<State> from, const std::shared_ptr<State> to);
+		void addSymbolTransition(const std::shared_ptr<State> from, const char symbol, const std::shared_ptr<State> to);
 		std::unique_ptr<NFA> createEpsilonTransition();
 		std::unique_ptr<NFA> createSymbolTransition(const char symbol);
 		std::unique_ptr<NFA> concatStates(const std::unique_ptr<NFA> first, const std::unique_ptr<NFA> second);

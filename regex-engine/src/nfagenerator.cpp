@@ -66,7 +66,7 @@ namespace Regex
 		from->epsilonTransitions.push_back(to);
 	}
 
-	void NfaGenerator::addSymbolTransition(const std::shared_ptr<State> from,const char symbol,const std::shared_ptr<State> to)
+	void NfaGenerator::addSymbolTransition(const std::shared_ptr<State> from, const char symbol, const std::shared_ptr<State> to)
 	{
 		from->symbolTransitions[symbol] = to;
 	}
@@ -94,7 +94,7 @@ namespace Regex
 		return std::make_unique<NFA>(first->start,second->end);
 	}
 
-	std::unique_ptr<NfaGenerator::NFA> NfaGenerator::unionStates(const std::unique_ptr<NFA> first,const std::unique_ptr<NFA> second)
+	std::unique_ptr<NfaGenerator::NFA> NfaGenerator::unionStates(const std::unique_ptr<NFA> first, const std::unique_ptr<NFA> second)
 	{
 		auto start = createState(false);
 		addEpsilonTransition(start, first->start);
