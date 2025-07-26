@@ -13,7 +13,7 @@ A minimal regular‑expression engine implemented in C++20, built with Visual St
 * [How It Works](#how-it-works)
 * [Usage](#usage)
 * [Contributing](#contributing)
-* 
+  
 ---
 
 ## Introduction
